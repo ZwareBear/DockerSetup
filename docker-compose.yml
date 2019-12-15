@@ -11,8 +11,8 @@ services:
       - PGID=${PGID}
       - TZ=${TZ}
     volumes:
-      - /opt/appdata/plexpy:/config
-      - /opt/appdata/plex/Library/Application\ Support/Plex\ Media\ Server/Logs:/logs
+      - /opt/appdata/tautulli:/config
+      - /opt/appdata/tautulli/Library/Application\ Support/Plex\ Media\ Server/Logs:/logs
     ports:
       - 8181:8181
     networks:
