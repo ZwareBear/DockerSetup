@@ -194,7 +194,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /home/dockeruser/traefik:/etc/traefik
       - /opt/appdata/shared:/shared
-      - /opt/appdata/traefik:/var/log    
+      - /opt/appdata/traefik:/var/log
+      - /opt/appdata/traefik/tmp:/tmp    
 #fail2ban - ban IPs after so many failed attempts
   fail2ban:
     hostname: fail2ban
