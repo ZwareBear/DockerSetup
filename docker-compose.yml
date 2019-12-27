@@ -71,7 +71,7 @@ services:
     container_name: radarr
     volumes:
       - /opt/appdata/radarr:/config
-      - /downloads/complete/movies:/downloads
+      - /downloads:/downloads
       - /mnt/storage/movies:/movies
       - /downloads/watch:/watch
     ports:
