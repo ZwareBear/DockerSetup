@@ -400,6 +400,23 @@ services:
       - /opt/appdata/telegraf/:/etc/telegraf/
     restart:
       always
+  tdarr_aio:
+    image: haveagitgat/tdarr_aio
+    container_name: tdarr_aio
+    ports:
+      -  8265:8265
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - /opt/appdata/tdarr:/home/Tdarr/Documents/Tdarr
+      - /downloads/tdarrDB:/var/lib/mongodb
+      - /mnt/storage:/home/Tdarr/media
+      - /your/transcodecache/folder:/home/Tdarr/cache
+      - /etc/localtime:/etc/localtime:ro
+    restart:
+      always
 #Networks, Needed for Traefik    
 networks:
   traefik_proxy1:
