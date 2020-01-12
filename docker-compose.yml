@@ -415,7 +415,7 @@ services:
       - /mnt/storage:/home/Tdarr/media
       - /mnt/storage/movies:/home/Tdarr/media/movies
       - /mnt/storage/tv:/home/Tdarr/media/tv
-      - /your/transcodecache/folder:/home/Tdarr/cache
+      - /downloads/tdarrDB/cache:/home/Tdarr/cache
       - /etc/localtime:/etc/localtime:ro
     restart:
       always
