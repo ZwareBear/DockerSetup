@@ -400,6 +400,7 @@ services:
       - /opt/appdata/telegraf/:/etc/telegraf/
     restart:
       always
+ #tdarr - convert / transcode video files 
   tdarr_aio:
     image: haveagitgat/tdarr_aio
     container_name: tdarr_aio
@@ -419,6 +420,23 @@ services:
       - /etc/localtime:/etc/localtime:ro
     restart:
       always
+ #Gitea - self host github
+  gitea:
+    image: gitea/gitea:latest
+    environment:
+      - USER_UID=${PUID}
+      - USER_GID=${PGID}
+    networks:
+      - gitea
+    volumes:
+      - /opt/appdata/gitea:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3030:3000"
+      - "222:22"
+    restart: always
+
 #Networks, Needed for Traefik    
 networks:
   traefik_proxy1:
