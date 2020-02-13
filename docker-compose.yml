@@ -427,7 +427,22 @@ services:
       - USER_UID=${PUID}
       - USER_GID=${PGID}
     networks:
-      - gitea
+      - traefik_proxy1
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=gitea"
+      - "traefik.frontend.rule=Host:gitea.${DOMAINNAME}"  #
+      - "traefik.port=3000"
+      - "traefik.docker.network=traefik_proxy1"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=example.com"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.frameDeny=true"
     volumes:
       - /opt/appdata/gitea:/data
       - /etc/timezone:/etc/timezone:ro
@@ -442,6 +457,4 @@ networks:
   traefik_proxy1:
       external: true
   default:
-      driver: bridge    
-  gitea:
-    external: false
+      driver: bridge
