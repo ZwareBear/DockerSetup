@@ -443,3 +443,5 @@ networks:
       external: true
   default:
       driver: bridge    
+  gitea:
+    external: false
