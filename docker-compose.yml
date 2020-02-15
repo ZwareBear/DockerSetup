@@ -16,7 +16,7 @@
 #     - "traefik.frontend.rule=Host:{URLprefix}.${DOMAINNAME}"
 #     - "traefik.port={ExternalPort}"
 ---
-version: '2'
+version: "3"
 services:
 # Basic function template
   x-function: &template_external
