@@ -37,6 +37,7 @@ services:
       - "traefik.frontend.headers.STSIncludeSubdomains=true"
       - "traefik.frontend.headers.STSPreload=true"
       - "traefik.frontend.headers.frameDeny=true"
+      - "docker.group=external"
     restart: unless-stopped
   x-function: &template_internal
     environment:
@@ -46,6 +47,8 @@ services:
     volumes:
       - /opt/appdata/shared:/shared
     restart: unless-stopped
+    labels:
+      - "docker.group=internal"
 
 
 
@@ -264,7 +267,6 @@ services:
     volumes:
       - /opt/appdata/influxdb/lib:/var/lib/influxdb
       - /opt/appdata/influxdb/:/etc/influxdb/
-      - /opt/appdata/shared:/shared
  #Server Metrics: https://github.com/grafana/grafana/tree/master/packaging/docker
   grafana:
     <<: *template_external
