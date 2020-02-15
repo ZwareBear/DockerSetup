@@ -1,16 +1,60 @@
 # /opt/docker-compose.yml
-# this is now in test repo
+#
+# new containers should follow this format:
+# {ContainerName}:
+#   image: {ImageName}:latest
+#   container_name: {ContainerName}
+#   volumes:
+#     - /dir/on/host:/dir/within/container
+#   ports:
+#     - {ExternalPort}:{internalContainerPort} # This should generally be default per container
+#   networks:
+#     - {NetworkName} #found at bottom of doc "traefik_proxy1" if container will be exposed
+#   labels:
+#     - "traefik.enable={true | false}"
+#     - "traefik.backend={ContainerName}"
+#     - "traefik.frontend.rule=Host:{URLprefix}.${DOMAINNAME}"
+#     - "traefik.port={ExternalPort}"
 ---
 version: '2'
 services:
-#Plex server stats page
-  tautulli:
-    image: linuxserver/tautulli:latest
-    container_name: tautulli
+# Basic function template
+  x-function: &template_external
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+    networks:
+      - traefik_proxy1
+    lablels:
+      - "traefik.docker.network=traefik_proxy1"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=example.com"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.frameDeny=true"
+    restart: unless-stopped
+  x-function: &template_internal
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - /opt/appdata/shared:/shared
+    restart: unless-stopped
+
+
+
+
+#Plex server stats page
+  tautulli:
+    <<: *template_external
+    image: linuxserver/tautulli:latest
+    container_name: tautulli
     volumes:
       - /opt/appdata/tautulli:/config
       - /opt/appdata/tautulli/Library/Application\ Support/Plex\ Media\ Server/Logs:/logs
@@ -23,19 +67,9 @@ services:
       - "traefik.backend=tautulli"
       - "traefik.frontend.rule=Host:plexstats.${DOMAINNAME}"
       - "traefik.port=8181"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-    restart: unless-stopped
 #Grabber, manage TV shows  
   sonarr:
+    <<: *template_external
     image: linuxserver/sonarr:latest
     container_name: sonarr
     volumes:
@@ -52,22 +86,9 @@ services:
       - "traefik.backend=sonarr"
       - "traefik.frontend.rule=Host:sonarr.${DOMAINNAME}"  #
       - "traefik.port=8989"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"    
-    restart: always
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
 #Grabber, manage movies 
   radarr:
+    <<: *template_external
     image: linuxserver/radarr:latest
     container_name: radarr
     volumes:
@@ -77,30 +98,14 @@ services:
       - /downloads/watch:/watch
     ports:
       - 7878:7878
-    networks:
-      - traefik_proxy1
     labels:
       - "traefik.enable=true"
       - "traefik.backend=radarr"
       - "traefik.frontend.rule=Host:radarr.${DOMAINNAME}"  #
       - "traefik.port=7878"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"    
-    restart: always
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
 #Manager, Used to maintain docker containers  
   portainer:
+    <<: *template_external
     image: portainer/portainer:latest
     container_name: portainer
     ports:
@@ -118,59 +123,30 @@ services:
       - "traefik.backend=portainer"
       - "traefik.frontend.rule=Host:portainer.${DOMAINNAME}"
       - "traefik.port=9000"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-    restart:
-      always   
 #Indexer, Used by managers to query sites for content  
   jackett:
+    <<: *template_external
     image: linuxserver/jackett:latest
     container_name: jackett
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ} 
     volumes:
       - /opt/appdata/jackett:/config
       - /downloads:/downloads
     ports:
       - 9117:9117
-    networks:
-      - traefik_proxy1
     labels:
       - "traefik.enable=true"
       - "traefik.backend=jackett"
       - "traefik.frontend.rule=Host:jackett.${DOMAINNAME}"  #
       - "traefik.port=9117"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-    restart: always
 #Reverse Proxy, Used to route applications to domain  
   traefik:
+    <<: *template_external
     hostname: traefik
     image: traefik:v1.7
     container_name: traefik
-    restart: always
     domainname: ${DOMAINNAME}
     networks:
       - default
-      - traefik_proxy1
     ports:
       - "80:80"
       - "443:443"
@@ -180,16 +156,6 @@ services:
       - "traefik.backend=traefik"
       - "traefik.frontend.rule=Host:traefik.${DOMAINNAME}" 
       - "traefik.port=80"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
       - "traefik.frontend.auth.basic.users=${HTTP_USERNAME}:${HTTP_PASSWORD}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -199,6 +165,7 @@ services:
       - /opt/appdata/traefik/tmp:/tmp    
 #fail2ban - ban IPs after so many failed attempts
   fail2ban:
+    <<: *template_internal
     hostname: fail2ban
     image: crazymax/fail2ban:latest
     container_name: fail2ban
@@ -206,17 +173,13 @@ services:
     cap_add:
     - NET_ADMIN
     - NET_RAW
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ} 
     volumes:
     - /var/log:/var/log:ro
     - /opt/appdata/fail2ban/data:/data
     - /opt/appdata/shared:/shared
-    restart: always  
 #Downloader, pull in content from torrents & hide traffic behind VPN  
   arch-deluge:
+    <<: *template_external
     image: binhex/arch-delugevpn:latest
     container_name: arch-deluge
     ports:
@@ -226,8 +189,6 @@ services:
       - 58946:58946 
     cap_add:
       - NET_ADMIN
-    networks:
-      - traefik_proxy1
     volumes:
       - /opt/appdata/arch-deluge:/config
       - /downloads:/downloads
@@ -235,9 +196,6 @@ services:
       - /opt/appdata/shared:/shared
       - /opt/appdata/arch-deluge/data:/data
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}    
       - VPN_ENABLED=yes
       - VPN_USER=${VPN_USER}
       - VPN_PASS=${VPN_PASS}
@@ -256,52 +214,27 @@ services:
       - "traefik.backend=arch-deluge"
       - "traefik.frontend.rule=Host:deluge.${DOMAINNAME}"
       - "traefik.port=8112"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
     privileged: true
-    restart: unless-stopped
 #updated version of plex requests  
   ombi:
+    <<: *template_external
     image: linuxserver/ombi
     container_name: ombi
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
       - BASE_URL=/ombi #optional
     volumes:
       - /opt/appdata/ombi:/config
       - /opt/appdata/shared:/shared
-    networks:
-      - traefik_proxy1
+    ports:
+      - 3579:3579
     labels:
       - "traefik.enable=true"
       - "traefik.backend=ombi"
       - "traefik.frontend.rule=Host:requests.${DOMAINNAME}"  #
       - "traefik.port=3579"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-    ports:
-      - 3579:3579
-    restart: unless-stopped
 #NZBGet - usenet downloader
   nzbget:
+    <<: *template_external
     image: linuxserver/nzbget:latest
     container_name: nzbget
     volumes:
@@ -318,23 +251,9 @@ services:
       - "traefik.backend=nzbget"
       - "traefik.frontend.rule=Host:nzbget.${DOMAINNAME}"  #
       - "traefik.port=6789"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-    restart: always
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
 #Data Metrics: https://docs.docker.com/samples/library/influxdb/ 
   influxdb:
+    <<: *template_internal
     image: influxdb:latest
     container_name: influxdb
     restart: always
@@ -346,52 +265,30 @@ services:
       - /opt/appdata/influxdb/lib:/var/lib/influxdb
       - /opt/appdata/influxdb/:/etc/influxdb/
       - /opt/appdata/shared:/shared
-    restart:
-      always
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
  #Server Metrics: https://github.com/grafana/grafana/tree/master/packaging/docker
   grafana:
+    <<: *template_external
     image: grafana/grafana:latest
     container_name: grafana
-    restart: always
     user: "104"
     links:
       - influxdb
     ports:
       - 3001:3000
-    networks:
-      - traefik_proxy1
     labels:
       - "traefik.enable=true"
       - "traefik.backend=grafana"
       - "traefik.frontend.rule=Host:grafana.${DOMAINNAME}"  #
       - "traefik.port=3000"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
     volumes:
       - /opt/appdata/grafana/var:/var/lib/grafana
       - /opt/appdata/grafana:/etc/grafana
       - /opt/appdata/shared:/shared
-    restart:
-      always
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
       - GF_INSTALL_PLUGINS=${GF_INSTALL_PLUGINS}
  #Server Metrics: feeds to influxdb 
   telegraf:
+    <<: *template_internal
     image: telegraf:latest
     container_name: telegraf
     links:
@@ -399,18 +296,13 @@ services:
     volumes:
       - /opt/appdata/telegraf:/var/lib/telegraf
       - /opt/appdata/telegraf/:/etc/telegraf/
-    restart:
-      always
  #tdarr - convert / transcode video files 
   tdarr_aio:
+    <<: *template_internal
     image: haveagitgat/tdarr_aio
     container_name: tdarr_aio
     ports:
       -  8265:8265
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
     volumes:
       - /opt/appdata/tdarr:/home/Tdarr/Documents/Tdarr
       - /downloads/tdarrDB:/var/lib/mongodb
@@ -419,40 +311,6 @@ services:
       - /mnt/storage/tv:/home/Tdarr/media/tv
       - /downloads/tdarrDB/cache:/home/Tdarr/cache
       - /etc/localtime:/etc/localtime:ro
-    restart:
-      always
- #Gitea - self host github
-  gitea:
-    image: gitea/gitea:latest
-    environment:
-      - USER_UID=${PUID}
-      - USER_GID=${PGID}
-    networks:
-      - traefik_proxy1
-    labels:
-      - "traefik.enable=true"
-      - "traefik.backend=gitea"
-      - "traefik.frontend.rule=Host:gitea.${DOMAINNAME}"  #
-      - "traefik.port=3000"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-    volumes:
-      - /opt/appdata/gitea:/data
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-    ports:
-      - "3030:3000"
-      - "222:22"
-    restart: always
-
 #Networks, Needed for Traefik    
 networks:
   traefik_proxy1:
