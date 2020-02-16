@@ -16,9 +16,9 @@
 #     - "traefik.frontend.rule=Host:{URLprefix}.${DOMAINNAME}"
 #     - "traefik.port={ExternalPort}"
 ---
-version: "2.4"
+version: "3.4"
 # Basic function 
-x-function: &template_external
+x-external_default: &template_external
   environment:
     - PUID=${PUID}
     - PGID=${PGID}
@@ -38,7 +38,7 @@ x-function: &template_external
     - "traefik.frontend.headers.frameDeny=true"
     - "docker.group=external"
   restart: unless-stopped
-x-function: &template_internal
+x-internal_default: &template_internal
   environment:
     - PUID=${PUID}
     - PGID=${PGID}
