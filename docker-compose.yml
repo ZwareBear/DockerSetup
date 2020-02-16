@@ -17,7 +17,6 @@
 #     - "traefik.port={ExternalPort}"
 ---
 version: "3"
-services:
 # Basic function template
 x-function: &template_external
   environment:
@@ -52,7 +51,7 @@ x-function: &template_internal
 
 
 
-
+services:
 #Plex server stats page
   tautulli:
     <<: *template_external
