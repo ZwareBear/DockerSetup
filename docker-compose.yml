@@ -27,6 +27,7 @@ x-external_default: &template_external
     - traefik_proxy1
   restart: unless-stopped
 x-external_labels: &external_labels
+  labels:
     - "traefik.docker.network=traefik_proxy1"
     - "traefik.frontend.headers.SSLRedirect=true"
     - "traefik.frontend.headers.STSSeconds=315360000"
