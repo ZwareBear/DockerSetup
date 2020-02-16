@@ -16,8 +16,8 @@
 #     - "traefik.frontend.rule=Host:{URLprefix}.${DOMAINNAME}"
 #     - "traefik.port={ExternalPort}"
 ---
-version: "3"
-# Basic function template
+version: "2.4"
+# Basic function 
 x-function: &template_external
   environment:
     - PUID=${PUID}
@@ -258,7 +258,6 @@ services:
     <<: *template_internal
     image: influxdb:latest
     container_name: influxdb
-    restart: always
     ports:
       - 8086:8086
       - 8083:8083
