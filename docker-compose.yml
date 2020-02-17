@@ -408,6 +408,7 @@ services:
     volumes:
       - /opt/appdata/telegraf:/var/lib/telegraf
       - /opt/appdata/telegraf/:/etc/telegraf/
+      - /var/run/docker.sock:/var/run/docker.sock
     restart:
       always
  #tdarr - convert / transcode video files 
