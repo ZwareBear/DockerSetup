@@ -32,6 +32,7 @@ services:
       - "traefik.frontend.headers.STSIncludeSubdomains=true"
       - "traefik.frontend.headers.STSPreload=true"
       - "traefik.frontend.headers.frameDeny=true"
+      - "docker.group=external"
     restart: unless-stopped
 #Grabber, manage TV shows  
   sonarr:
@@ -60,7 +61,8 @@ services:
       - "traefik.frontend.headers.SSLHost=example.com"
       - "traefik.frontend.headers.STSIncludeSubdomains=true"
       - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"    
+      - "traefik.frontend.headers.frameDeny=true"
+      - "docker.group=external"
     restart: always
     environment:
       - PUID=${PUID}
@@ -92,7 +94,8 @@ services:
       - "traefik.frontend.headers.SSLHost=example.com"
       - "traefik.frontend.headers.STSIncludeSubdomains=true"
       - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"    
+      - "traefik.frontend.headers.frameDeny=true"
+      - "docker.group=external"
     restart: always
     environment:
       - PUID=${PUID}
@@ -126,7 +129,8 @@ services:
       - "traefik.frontend.headers.SSLHost=example.com"
       - "traefik.frontend.headers.STSIncludeSubdomains=true"
       - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
+      - "traefik.frontend.headers.frameDeny=true" 
+      - "docker.group=internal"
     restart:
       always   
 #Indexer, Used by managers to query sites for content  
@@ -159,6 +163,7 @@ services:
       - "traefik.frontend.headers.STSIncludeSubdomains=true"
       - "traefik.frontend.headers.STSPreload=true"
       - "traefik.frontend.headers.frameDeny=true"
+      - "docker.group=internal"
     restart: always
 #Reverse Proxy, Used to route applications to domain  
   traefik:
@@ -190,6 +195,7 @@ services:
       - "traefik.frontend.headers.STSPreload=true"
       - "traefik.frontend.headers.frameDeny=true"
       - "traefik.frontend.auth.basic.users=${HTTP_USERNAME}:${HTTP_PASSWORD}"
+      - "docker.group=internal"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /home/dockeruser/traefik:/etc/traefik
@@ -265,6 +271,7 @@ services:
       - "traefik.frontend.headers.STSIncludeSubdomains=true"
       - "traefik.frontend.headers.STSPreload=true"
       - "traefik.frontend.headers.frameDeny=true"
+      - "docker.group=external"
     privileged: true
     restart: unless-stopped
 #updated version of plex requests  
@@ -296,6 +303,7 @@ services:
       - "traefik.frontend.headers.STSIncludeSubdomains=true"
       - "traefik.frontend.headers.STSPreload=true"
       - "traefik.frontend.headers.frameDeny=true"
+      - "docker.group=external"
     ports:
       - 3579:3579
     restart: unless-stopped
@@ -327,6 +335,7 @@ services:
       - "traefik.frontend.headers.STSIncludeSubdomains=true"
       - "traefik.frontend.headers.STSPreload=true"
       - "traefik.frontend.headers.frameDeny=true"
+      - "docker.group=external"
     restart: always
     environment:
       - PUID=${PUID}
@@ -378,6 +387,7 @@ services:
       - "traefik.frontend.headers.STSIncludeSubdomains=true"
       - "traefik.frontend.headers.STSPreload=true"
       - "traefik.frontend.headers.frameDeny=true"
+      - "docker.group=external"
     volumes:
       - /opt/appdata/grafana/var:/var/lib/grafana
       - /opt/appdata/grafana:/etc/grafana
