@@ -453,7 +453,7 @@ services:
       - "traefik.enable=true"
       - "traefik.backend=bookstack"
       - "traefik.frontend.rule=Host:wiki.${DOMAINNAME}"  #
-      - "traefik.port=6875"
+      - "traefik.port=80"
       - "traefik.docker.network=traefik_proxy1"
       - "traefik.frontend.headers.SSLRedirect=true"
       - "traefik.frontend.headers.STSSeconds=315360000"
