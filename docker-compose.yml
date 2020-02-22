@@ -434,6 +434,7 @@ services:
   #bookstack: Wiki site - https://github.com/linuxserver/docker-bookstack
   bookstack:
     image: solidnerd/bookstack:0.27.5
+    container_name: bookstack
     depends_on:
     - bookstack_db
     environment:
@@ -470,6 +471,7 @@ services:
       - "docker.group=external"
     restart: unless-stopped
   bookstack_db:
+    container_name: bookstack_db
     image: mysql:5.7.21
     environment:
       - PUID=${PUID}
