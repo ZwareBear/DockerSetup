@@ -483,6 +483,8 @@ services:
       - MYSQL_PASSWORD=${BOOKSTACK_DB_PASS}
     volumes:
       - /opt/appdata/bookstack_db:/config
+    ports:
+      - 3306:3306
     restart: unless-stopped
   #Huginn - https://github.com/huginn/huginn/blob/master/doc/docker/install.md
   huginn:
