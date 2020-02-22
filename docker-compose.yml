@@ -433,8 +433,9 @@ services:
       always
   #bookstack: Wiki site - https://github.com/linuxserver/docker-bookstack
   bookstack:
-    image: linuxserver/bookstack
-    container_name: bookstack
+    image: solidnerd/bookstack:0.27.5
+    depends_on:
+    - bookstack_db
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -443,9 +444,10 @@ services:
       - DB_USER=bookstack
       - DB_PASS=${BOOKSTACK_DB_PASS}
       - DB_DATABASE=bookstackapp
-      - APP_URL=https://wiki.zwarebear.com
     volumes:
       - /opt/appdata/bookstack:/config
+      #- uploads:/var/www/bookstack/public/uploads
+      #- storage-uploads:/var/www/bookstack/storage/uploads
     ports:
       - 6875:80
     networks:
@@ -467,11 +469,8 @@ services:
       - "traefik.frontend.headers.frameDeny=true"
       - "docker.group=external"
     restart: unless-stopped
-    depends_on:
-      - bookstack_db
   bookstack_db:
-    image: linuxserver/mariadb
-    container_name: bookstack_db
+    image: mysql:5.7.21
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
