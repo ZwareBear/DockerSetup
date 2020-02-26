@@ -431,63 +431,6 @@ services:
       - /etc/localtime:/etc/localtime:ro
     restart:
       always
-  #bookstack: Wiki site - https://github.com/linuxserver/docker-bookstack
-  bookstack:
-    image: solidnerd/bookstack:0.27.5
-    container_name: bookstack
-    depends_on:
-    - bookstack_db
-    links:
-      - bookstack_db
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-      - DB_HOST=bookstack_db
-      - DB_USER=bookstack
-      - DB_PASS=${BOOKSTACK_DB_PASS}
-      - DB_DATABASE=bookstackapp
-    volumes:
-      - /opt/appdata/bookstack:/config
-      #- uploads:/var/www/bookstack/public/uploads
-      #- storage-uploads:/var/www/bookstack/storage/uploads
-    ports:
-      - 6875:80
-    networks:
-      - traefik_proxy1
-    labels:
-      - "traefik.enable=true"
-      - "traefik.backend=bookstack"
-      - "traefik.frontend.rule=Host:wiki.${DOMAINNAME}"  #
-      - "traefik.port=80"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-      - "docker.group=external"
-    restart: unless-stopped
-  bookstack_db:
-    container_name: bookstack_db
-    image: mysql:5.7.21
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-      - MYSQL_ROOT_PASSWORD=${BOOKSTACK_ROOT_PASS}
-      - MYSQL_DATABASE=bookstackapp
-      - MYSQL_USER=bookstack
-      - MYSQL_PASSWORD=${BOOKSTACK_DB_PASS}
-    volumes:
-      - /opt/appdata/bookstack_db:/config
-    ports:
-      - 3306:3306
-    restart: unless-stopped
   #Huginn - https://github.com/huginn/huginn/blob/master/doc/docker/install.md
   huginn:
     image: huginn/huginn:latest
@@ -514,7 +457,16 @@ services:
       - "traefik.frontend.headers.STSPreload=true"
       - "traefik.frontend.headers.frameDeny=true"
       - "docker.group=external"
-
+  #Firefly:
+  firefly_iii_app: 
+    image: jc5x/firefly-iii:latest
+    depends_on:
+      - firefly_iii_db
+    ports:
+      - 3459:80
+    volumes:
+      - /opt/appdata/firefly/export:/var/www/firefly-iii/storage/export
+      - /opt/appdata/firefly/upload:/var/www/firefly-iii/storage/upload
 #Networks, Needed for Traefik    
 networks:
   traefik_proxy1:
