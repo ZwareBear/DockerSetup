@@ -457,16 +457,7 @@ services:
       - "traefik.frontend.headers.STSPreload=true"
       - "traefik.frontend.headers.frameDeny=true"
       - "docker.group=external"
-  #Firefly:
-  firefly_iii_app: 
-    image: jc5x/firefly-iii:latest
-    depends_on:
-      - firefly_iii_db
-    ports:
-      - 3459:80
-    volumes:
-      - /opt/appdata/firefly/export:/var/www/firefly-iii/storage/export
-      - /opt/appdata/firefly/upload:/var/www/firefly-iii/storage/upload
+    
 #Networks, Needed for Traefik    
 networks:
   traefik_proxy1:
