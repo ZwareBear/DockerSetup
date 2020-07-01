@@ -16,6 +16,7 @@
 #     - "traefik.frontend.rule=Host:{URLprefix}.${DOMAINNAME}"
 #     - "traefik.port={ExternalPort}"
 ---
+---
 version: "3.4"
 # Basic function 
 x-external_default: &template_external
@@ -26,6 +27,7 @@ x-external_default: &template_external
   networks:
     - traefik_proxy1
   restart: unless-stopped
+
 x-internal_default: &template_internal
   environment:
     - PUID=${PUID}
@@ -37,95 +39,40 @@ x-internal_default: &template_internal
   labels:
     - "docker.group=internal"
 
-
-
 services:
-#Plex server stats page
-  tautulli:
-    <<: *template_external
-    image: linuxserver/tautulli:latest
-    container_name: tautulli
-    volumes:
-      - /opt/appdata/tautulli:/config
-      - /opt/appdata/tautulli/Library/Application\ Support/Plex\ Media\ Server/Logs:/logs
-    ports:
-      - 8181:8181
-    networks:
-      - traefik_proxy1
-    labels:
-      - "traefik.enable=true"
-      - "traefik.backend=tautulli"
-      - "traefik.frontend.rule=Host:plexstats.${DOMAINNAME}"
-      - "traefik.port=8181"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-      - "docker.group=external"
-#Grabber, manage TV shows  
-  sonarr:
-    <<: *template_external
-    image: linuxserver/sonarr:latest
-    container_name: sonarr
-    volumes:
-      - /opt/appdata/sonarr:/config
-      - /mnt/storage/tv:/tv
-      - /downloads/:/downloads
-      - /downloads/complete/tv_import:/tv_import
-    ports:
-      - 27021:8989
-    networks:
-      - traefik_proxy1
-    labels:
-      - "traefik.enable=true"
-      - "traefik.backend=sonarr"
-      - "traefik.frontend.rule=Host:sonarr.${DOMAINNAME}"  #
-      - "traefik.port=8989"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-      - "docker.group=external"
-#Grabber, manage movies 
-  radarr:
-    <<: *template_external
-    image: linuxserver/radarr:latest
-    container_name: radarr
-    volumes:
-      - /opt/appdata/radarr:/config
-      - /downloads:/downloads
-      - /mnt/storage/movies:/movies
-      - /downloads/watch:/watch
-    ports:
-      - 7878:7878
-    labels:
-      - "traefik.enable=true"
-      - "traefik.backend=radarr"
-      - "traefik.frontend.rule=Host:radarr.${DOMAINNAME}"  #
-      - "traefik.port=7878"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-      - "docker.group=external"
+    traefik:
+      <<: *template_external
+      hostname: traefik
+      image: traefik:v2.2
+      container_name: traefik
+      domainname: ${DOMAINNAME}
+      networks:
+        - default
+      ports:
+        - "80:80"
+        - "443:443"
+        - "8080:8080"
+      labels:
+        - "docker.group=external"
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock:ro
+        - /home/dockeruser/traefik:/etc/traefik
+        - /opt/appdata/shared:/shared
+        - /opt/appdata/traefik:/var/log
+        - /opt/appdata/traefik/tmp:/tmp    
+      command:
+        - --providers.docker
+        - --entrypoints.web.address=:80
+        - --providers.docker.network=traefik_proxy1
+        - --entrypoints.websecure.address=:443
+        - --entrypoints.web.http.redirections.entryPoint.to=websecure
+        - --entrypoints.web.http.redirections.entryPoint.scheme=https
+        - '--providers.docker.defaultRule=Host(`{{ normalize .Name }}.${DOMAINNAME}`)'
+        # - "--certificatesresolvers.mydnschallenge.acme.dnschallenge=true"
+        # - "--certificatesresolvers.mydnschallenge.acme.dnschallenge.provider=cloudflare"
+        # - "--certificatesresolvers.mydnschallenge.acme.email=postmaster@example.com"
+        # - "--certificatesresolvers.mydnschallenge.acme.storage=/letsencrypt/acme.json"
+
 #Manager, Used to maintain docker containers  
   portainer:
     <<: *template_external
@@ -157,261 +104,8 @@ services:
       - "traefik.frontend.headers.STSPreload=true"
       - "traefik.frontend.headers.frameDeny=true"
       - "docker.group=external"
-#Indexer, Used by managers to query sites for content  
-  jackett:
-    <<: *template_external
-    image: linuxserver/jackett:latest
-    container_name: jackett
-    volumes:
-      - /opt/appdata/jackett:/config
-      - /downloads:/downloads
-    ports:
-      - 9117:9117
-    labels:
-      - "traefik.enable=true"
-      - "traefik.backend=jackett"
-      - "traefik.frontend.rule=Host:jackett.${DOMAINNAME}"  #
-      - "traefik.port=9117"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-      - "docker.group=external"
-#Reverse Proxy, Used to route applications to domain  
-  traefik:
-    <<: *template_external
-    hostname: traefik
-    image: traefik:v1.7
-    container_name: traefik
-    domainname: ${DOMAINNAME}
-    networks:
-      - default
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.backend=traefik"
-      - "traefik.frontend.rule=Host:traefik.${DOMAINNAME}" 
-      - "traefik.port=80"
-      - "traefik.frontend.auth.basic.users=${HTTP_USERNAME}:${HTTP_PASSWORD}"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-      - "docker.group=external"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /home/dockeruser/traefik:/etc/traefik
-      - /opt/appdata/shared:/shared
-      - /opt/appdata/traefik:/var/log
-      - /opt/appdata/traefik/tmp:/tmp    
-#fail2ban - ban IPs after so many failed attempts
-  fail2ban:
-    <<: *template_internal
-    hostname: fail2ban
-    image: crazymax/fail2ban:latest
-    container_name: fail2ban
-    network_mode: "host"
-    cap_add:
-    - NET_ADMIN
-    - NET_RAW
-    volumes:
-    - /var/log:/var/log:ro
-    - /opt/appdata/fail2ban/data:/data
-    - /opt/appdata/shared:/shared
-#Downloader, pull in content from torrents & hide traffic behind VPN  
-  arch-deluge:
-    <<: *template_external
-    image: binhex/arch-delugevpn:latest
-    container_name: arch-deluge
-    ports:
-      - 8112:8112 
-      - 8118:8118 
-      - 58846:58846 
-      - 58946:58946 
-    cap_add:
-      - NET_ADMIN
-    volumes:
-      - /opt/appdata/arch-deluge:/config
-      - /downloads:/downloads
-      - /mnt/storage:/mnt/storage
-      - /opt/appdata/shared:/shared
-      - /opt/appdata/arch-deluge/data:/data
-    environment:
-      - VPN_ENABLED=yes
-      - VPN_USER=${VPN_USER}
-      - VPN_PASS=${VPN_PASS}
-      - VPN_PROV=custom
-     #- VPN_OPTIONS=<additional openvpn cli options> 
-      - STRICT_PORT_FORWARD=yes
-      - ENABLE_PRIVOXY=yes
-      - LAN_NETWORK=192.168.0.100/24
-      - NAME_SERVERS=103.86.96.100, 103.86.99.100
-      - DELUGE_DAEMON_LOG_LEVEL=error
-      - DELUGE_WEB_LOG_LEVEL=error
-      - DEBUG=true
-      - UMASK=000
-    labels:
-      - "traefik.enable=true"
-      - "traefik.backend=arch-deluge"
-      - "traefik.frontend.rule=Host:deluge.${DOMAINNAME}"
-      - "traefik.port=8112"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-      - "docker.group=external"
-    privileged: true
-#ombi - updated version of plex requests  
-  ombi:
-    <<: *template_external
-    image: linuxserver/ombi:latest
-    container_name: ombi
-    environment:
-      - BASE_URL=/ombi #optional
-    volumes:
-      - /opt/appdata/ombi:/config
-      - /opt/appdata/shared:/shared
-    ports:
-      - 3579:3579
-    labels:
-      - "traefik.enable=true"
-      - "traefik.backend=ombi"
-      - "traefik.frontend.rule=Host:requests.${DOMAINNAME}"  #
-      - "traefik.port=3579"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-      - "docker.group=external"
-#NZBGet - usenet downloader
-  nzbget:
-    <<: *template_external
-    image: linuxserver/nzbget:latest
-    container_name: nzbget
-    volumes:
-      - /opt/appdata/nzbget/config:/config
-      - /opt/appdata/nzbget/data:/data
-      - /downloads:/downloads
-      - /opt/appdata/shared:/shared
-    ports:
-      - 27020:6789
-    networks:
-      - traefik_proxy1
-    labels:
-      - "traefik.enable=true"
-      - "traefik.backend=nzbget"
-      - "traefik.frontend.rule=Host:nzbget.${DOMAINNAME}"  #
-      - "traefik.port=6789"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-      - "docker.group=external"
-#Data Metrics: https://docs.docker.com/samples/library/influxdb/ 
-  influxdb:
-    <<: *template_internal
-    image: influxdb:latest
-    container_name: influxdb
-    ports:
-      - 8086:8086
-      - 8083:8083
-      - 8090:8090/udp
-    volumes:
-      - /opt/appdata/influxdb/lib:/var/lib/influxdb
-      - /opt/appdata/influxdb/:/etc/influxdb/
- #Server Metrics: https://github.com/grafana/grafana/tree/master/packaging/docker
-  grafana:
-    <<: *template_external
-    image: grafana/grafana:latest
-    container_name: grafana
-    user: "104"
-    links:
-      - influxdb
-    ports:
-      - 3001:3000
-    labels: 
-      - "traefik.enable=true"
-      - "traefik.backend=grafana"
-      - "traefik.frontend.rule=Host:grafana.${DOMAINNAME}"  #
-      - "traefik.port=3000"
-      - "traefik.docker.network=traefik_proxy1"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-      - "docker.group=external"
-    volumes:
-      - /opt/appdata/grafana/var:/var/lib/grafana
-      - /opt/appdata/grafana:/etc/grafana
-      - /opt/appdata/shared:/shared
-    environment:
-      - GF_INSTALL_PLUGINS=${GF_INSTALL_PLUGINS}
- #Server Metrics: feeds to influxdb 
-  telegraf:
-    <<: *template_internal
-    image: telegraf:latest
-    container_name: telegraf
-    links:
-      - influxdb
-    volumes:
-      - /opt/appdata/telegraf:/var/lib/telegraf
-      - /opt/appdata/telegraf/:/etc/telegraf/
- #tdarr - convert / transcode video files 
-  tdarr_aio:
-    <<: *template_internal
-    image: haveagitgat/tdarr_aio
-    container_name: tdarr_aio
-    ports:
-      -  8265:8265
-    volumes:
-      - /opt/appdata/tdarr:/home/Tdarr/Documents/Tdarr
-      - /downloads/tdarrDB:/var/lib/mongodb
-      - /mnt/storage:/home/Tdarr/media
-      - /mnt/storage/movies:/home/Tdarr/media/movies
-      - /mnt/storage/tv:/home/Tdarr/media/tv
-      - /downloads/tdarrDB/cache:/home/Tdarr/cache
-      - /etc/localtime:/etc/localtime:ro
+
 #Networks, Needed for Traefik    
 networks:
   traefik_proxy1:
       external: true
-  default:
-      driver: bridge
