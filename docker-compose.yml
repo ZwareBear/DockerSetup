@@ -431,7 +431,22 @@ services:
       - /etc/localtime:/etc/localtime:ro
     restart:
       always
-    
+  lidarr:
+    image: linuxserver/lidarr
+    container_name: lidarr
+    ports:
+      -  8686:8686
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - /opt/appdata/lidarr:/config
+      - /mnt/storage/music:/music
+      - /downloads/music:/downloads
+    restart:
+      always
+
 #Networks, Needed for Traefik    
 networks:
   traefik_proxy1:
