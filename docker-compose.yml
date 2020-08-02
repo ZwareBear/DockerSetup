@@ -443,7 +443,7 @@ services:
     volumes:
       - /opt/appdata/lidarr:/config
       - /mnt/storage/music:/music
-      - /downloads/music:/downloads
+      - /downloads:/downloads
     restart:
       always
 
